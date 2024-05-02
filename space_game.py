@@ -93,6 +93,7 @@ class SpaceGame:
         self.settings.init_dynamic_settings(self.speed_multiplier)
         pygame.mouse.set_visible(False)
         self.stats.reset_stats()
+        self.sb.prep_score()
         self.game_active = True
         self.bullets.empty()
         self.aliens.empty()
@@ -147,10 +148,16 @@ class SpaceGame:
     def _check_bullet_alien_collisions(self):
         #check for bullets that have hit aliens
         collisions = pygame.sprite.groupcollide(self.bullets, self.aliens, True, True)
+        if collisions:
+            for aliens in collisions.values():
+                self.stats.score += self.settings.alien_points * len(aliens)
+            self.sb.prep_score()
+
         if not self.aliens:
             self.bullets.empty()
             self._create_fleet()
             self.settings.increase_speed()
+
 
     def _create_alien(self, position_x, position_y):
         """create an alien and place it in the row"""
