@@ -39,6 +39,11 @@ class Ship:
             self.y += self.settings.ship_speed
         self.rect.x = self.x
         self.rect.y = self.y
+
+    def centre_ship(self):
+        """centre the ship on the screen"""
+        self.rect.midbottom = self.screen_rect.midbottom
+        self.x = float(self.rect.x)
     def blitme(self):
         """Draw the ship at its current location"""
         self.screen.blit(self.image, self.rect)
