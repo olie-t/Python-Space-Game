@@ -8,6 +8,7 @@ from ship import Ship
 from bullet import Bullet
 from alien import Alien
 from button import Button
+from scoreboard import Scoreboard
 
 class SpaceGame:
     """Overall class to manage game assets and behavior."""
@@ -22,6 +23,7 @@ class SpaceGame:
 
         #Create an isntance to store game stats
         self.stats = GameStats(self)
+        self.sb = Scoreboard(self)
 
         self.ship = Ship(self)
         self.bullets = pygame.sprite.Group()
@@ -230,6 +232,7 @@ class SpaceGame:
             bullet.draw_bullet()
         self.ship.blitme()
         self.aliens.draw(self.screen)
+        self.sb.show_score()
 
         if not self.game_active:
             self.easy_button.draw_button()
