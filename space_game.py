@@ -34,8 +34,10 @@ class SpaceGame:
         #start the game in an inactive state
         self.game_active = False
 
-        #make the play button
-        self.play_button = Button(self, "Play")
+        #make the difficulty buttons
+        self.easy_button = Button(self, "Easy", -200)
+        self.standard_button = Button(self, "Standard")
+        self.hard_button = Button(self, "Hard", 200)
 
     def run_game(self):
         """Start the main loop for the game"""
@@ -59,20 +61,42 @@ class SpaceGame:
                 self._check_keyup_events(event)
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_pos = pygame.mouse.get_pos()
-                self._check_play_button(mouse_pos)
+                self._check_easy_button(mouse_pos)
+                self._check_standard_button(mouse_pos)
+                self._check_hard_button(mouse_pos)
 
-    def _check_play_button(self, mouse_pos):
-        """start a new game when player clicks play"""
-        button_clicked = self.play_button.rect.collidepoint(mouse_pos)
+    def _check_easy_button(self, mouse_pos):
+        """start a new game when player clicks easy"""
+        button_clicked = self.easy_button.rect.collidepoint(mouse_pos)
         if button_clicked and not self.game_active:
-            pygame.mouse.set_visible(False)
-            self.stats.reset_stats()
-            self.game_active = True
-            self.bullets.empty()
-            self.aliens.empty()
+            self.speed_multiplier = 1
+            self._start_game()
 
-            self._create_fleet()
-            self.ship.centre_ship()
+    def _check_standard_button(self, mouse_pos):
+        """start a new game when player clicks easy"""
+        button_clicked = self.standard_button.rect.collidepoint(mouse_pos)
+        if button_clicked and not self.game_active:
+            self.speed_multiplier = 1.25
+            self._start_game()
+
+    def _check_hard_button(self, mouse_pos):
+        """start a new game when player clicks easy"""
+        button_clicked = self.hard_button.rect.collidepoint(mouse_pos)
+        if button_clicked and not self.game_active:
+            self.speed_multiplier = 1.5
+            self._start_game()
+
+    def _start_game(self):
+        """reset stats and start a new game"""
+        self.settings.init_dynamic_settings(self.speed_multiplier)
+        pygame.mouse.set_visible(False)
+        self.stats.reset_stats()
+        self.game_active = True
+        self.bullets.empty()
+        self.aliens.empty()
+        self._create_fleet()
+        self.ship.centre_ship()
+
 
     def _check_keydown_events(self, event):
         """Respond to keypresses"""
@@ -89,6 +113,9 @@ class SpaceGame:
             sys.exit()
         elif event.key == pygame.K_SPACE:
             self._fire_bullet()
+        elif event.key == pygame.K_p:
+            self._start_game()
+
     def _check_keyup_events(self, event):
         """respond to key releases"""
         if event.key == pygame.K_d:
@@ -120,8 +147,8 @@ class SpaceGame:
         collisions = pygame.sprite.groupcollide(self.bullets, self.aliens, True, True)
         if not self.aliens:
             self.bullets.empty()
-            self.settings.alien_speed += 0.1
             self._create_fleet()
+            self.settings.increase_speed()
 
     def _create_alien(self, position_x, position_y):
         """create an alien and place it in the row"""
@@ -148,9 +175,7 @@ class SpaceGame:
         """Create the fleet of aliens"""
         alien = Alien(self)
         alien_width, alien_height = alien.rect.size
-
         current_x, current_y = alien_width, alien_height
-
         while current_y < (self.settings.screen_height - 5 * alien_height):
 
             while current_x < (self.settings.screen_width - 2 * alien_width):
@@ -197,6 +222,7 @@ class SpaceGame:
             if alien.rect.bottom >= self.settings.screen_height:
                 self._ship_hit()
                 break
+
     def _update_screen(self):
         # Redraw the screen every loop
         self.screen.fill(self.bg_color)
@@ -206,7 +232,9 @@ class SpaceGame:
         self.aliens.draw(self.screen)
 
         if not self.game_active:
-            self.play_button.draw_button()
+            self.easy_button.draw_button()
+            self.standard_button.draw_button()
+            self.hard_button.draw_button()
 
         # Make the most recently drawn screen visable
         pygame.display.flip()
