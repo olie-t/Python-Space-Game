@@ -94,6 +94,8 @@ class SpaceGame:
         pygame.mouse.set_visible(False)
         self.stats.reset_stats()
         self.sb.prep_score()
+        self.sb.prep_level()
+        self.sb.prep_ships()
         self.game_active = True
         self.bullets.empty()
         self.aliens.empty()
@@ -152,11 +154,15 @@ class SpaceGame:
             for aliens in collisions.values():
                 self.stats.score += self.settings.alien_points * len(aliens)
             self.sb.prep_score()
+            self.sb.check_high_score()
+
 
         if not self.aliens:
             self.bullets.empty()
             self._create_fleet()
             self.settings.increase_speed()
+            self.stats.level += 1
+            self.sb.prep_level()
 
 
     def _create_alien(self, position_x, position_y):
@@ -210,6 +216,7 @@ class SpaceGame:
         if self.stats.ships_left > 0:
             #Decrement ships left
             self.stats.ships_left -= 1
+            self.sb.prep_ships()
 
             #remove remaining bullets and aliens
             self.aliens.empty()
@@ -219,7 +226,7 @@ class SpaceGame:
             self._create_fleet()
             self.ship.centre_ship()
 
-            #ppause
+            #pause
             sleep(0.5)
         else:
             self.game_active = False
