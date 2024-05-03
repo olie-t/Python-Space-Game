@@ -1,3 +1,6 @@
+from pathlib import Path
+
+
 class GameStats:
     """Track stats for the game"""
 
@@ -5,7 +8,11 @@ class GameStats:
         self.settings = sg_game.settings
         self.reset_stats()
         #high score should never be reset
-        self.high_score = 0
+        path = Path('high_score.txt')
+        if path.exists():
+            self.high_score = int(path.read_text())
+        else:
+            self.high_score = 0
 
     def reset_stats(self):
         self.ships_left = self.settings.ship_limit

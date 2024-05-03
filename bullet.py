@@ -25,8 +25,30 @@ class Bullet(Sprite):
         self.y -= self.settings.bullet_speed
         self.rect.y = self.y
 
-
     def draw_bullet(self):
         """Draw the bullet"""
         pygame.draw.rect(self.screen, self.color, self.rect)
+
+class AlienBullet(Sprite):
+    """ A Class to manage bullets fired from the aliens"""
+
+    def __init__(self, sg_game, alien):
+        super().__init__()
+        self.screen = sg_game.screen
+        self.settings = sg_game.settings
+        self.color = self.settings.alien_bullet_color
+
+        self.rect = pygame.Rect(0, 0, self.settings.bullet_width, self.settings.bullet_height)
+
+        self.rect.midtop = alien.rect.midbottom
+        self.y = float(self.rect.y)
+
+    def update(self):
+        self.y += self.settings.alien_bullet_speed
+        self.rect.y = self.y
+
+    def draw_alien_bullet(self):
+        pygame.draw.rect(self.screen, self.color, self.rect)
+
+
 

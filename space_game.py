@@ -1,11 +1,13 @@
+import random
 import sys
 import pygame
 from time import sleep
+from pathlib import Path
 
 from settings import Settings
 from game_stats import GameStats
 from ship import Ship
-from bullet import Bullet
+from bullet import Bullet, AlienBullet
 from alien import Alien
 from button import Button
 from scoreboard import Scoreboard
@@ -20,6 +22,7 @@ class SpaceGame:
         self.settings = Settings()
         self.screen = pygame.display.set_mode((self.settings.screen_width, self.settings.screen_height))
         pygame.display.set_caption("Space Game")
+        self.screen_rect = self.screen.get_rect()
 
         #Create an isntance to store game stats
         self.stats = GameStats(self)
@@ -28,6 +31,7 @@ class SpaceGame:
         self.ship = Ship(self)
         self.bullets = pygame.sprite.Group()
         self.aliens = pygame.sprite.Group()
+        self.alien_bullets = pygame.sprite.Group()
         self._create_fleet()
 
         #set the background colour
@@ -49,6 +53,7 @@ class SpaceGame:
                 self.ship.update()
                 self._update_bullets()
                 self._update_aliens()
+
             self._update_screen()
             self.clock.tick(120)
 
@@ -56,7 +61,7 @@ class SpaceGame:
         # Watch for keyboard and mouse events
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                sys.exit()
+                self._save_and_exit()
             elif event.type == pygame.KEYDOWN:
                 self._check_keydown_events(event)
             elif event.type == pygame.KEYUP:
@@ -115,11 +120,18 @@ class SpaceGame:
         elif event.key == pygame.K_s:
             self.ship.moving_down = True
         elif event.key == pygame.K_q:
-            sys.exit()
+            self._save_and_exit()
         elif event.key == pygame.K_SPACE:
             self._fire_bullet()
         elif event.key == pygame.K_p:
             self._start_game()
+
+    def _save_and_exit(self):
+        """Save highscore and quit"""
+        path = Path('high_score.txt')
+        high_score_str = str(self.stats.high_score)
+        path.write_text(high_score_str)
+        sys.exit()
 
     def _check_keyup_events(self, event):
         """respond to key releases"""
@@ -148,22 +160,46 @@ class SpaceGame:
         self._check_bullet_alien_collisions()
 
     def _check_bullet_alien_collisions(self):
-        #check for bullets that have hit aliens
+        """check for bullets that have hit aliens"""
         collisions = pygame.sprite.groupcollide(self.bullets, self.aliens, True, True)
         if collisions:
             for aliens in collisions.values():
                 self.stats.score += self.settings.alien_points * len(aliens)
             self.sb.prep_score()
             self.sb.check_high_score()
-
-
         if not self.aliens:
-            self.bullets.empty()
-            self._create_fleet()
-            self.settings.increase_speed()
-            self.stats.level += 1
-            self.sb.prep_level()
+            self._start_new_level()
 
+    def _alien_fire_bullet(self):
+        """Handle logic for aliens to fire"""
+        for alien in self.aliens:
+            roll = random.randint(0, 100)
+
+            if roll > 95 and (len(self.alien_bullets) < self.settings.alien_bullets_allowed):
+                new_bullet = AlienBullet(self, alien)
+                self.alien_bullets.add(new_bullet)
+
+    def _update_alien_bullets(self):
+        """ Update bullets fired by aliens"""
+        self.alien_bullets.update()
+        for bullet in self.alien_bullets.copy():
+            if bullet.rect.y >= self.screen_rect.bottom:
+                self.alien_bullets.remove(bullet)
+        self._check_bullet_ship_collisions()
+
+    def _check_bullet_ship_collisions(self):
+        """Check for bullets that have hit the ship"""
+        collisions = pygame.sprite.spritecollide(self.ship, self.alien_bullets, True)
+        if collisions:
+            self._ship_hit()
+
+    def _start_new_level(self):
+        """Starts a new level"""
+        self.bullets.empty()
+        self._create_fleet()
+        self.settings.increase_speed()
+        self.stats.level += 1
+        self.sb.prep_level()
 
     def _create_alien(self, position_x, position_y):
         """create an alien and place it in the row"""
@@ -203,6 +239,9 @@ class SpaceGame:
         """Update positions of the aliens in the fleet"""
         self._check_fleet_edges()
         self.aliens.update()
+        self._alien_fire_bullet()
+        self._update_alien_bullets()
+
 
         #look for alien ship collisions
         if pygame.sprite.spritecollideany(self.ship, self.aliens):
@@ -244,6 +283,8 @@ class SpaceGame:
         self.screen.fill(self.bg_color)
         for bullet in self.bullets.sprites():
             bullet.draw_bullet()
+        for alien_bullet in self.alien_bullets.sprites():
+            alien_bullet.draw_alien_bullet()
         self.ship.blitme()
         self.aliens.draw(self.screen)
         self.sb.show_score()
