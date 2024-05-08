@@ -38,7 +38,7 @@ class AlienBullet(Sprite):
         self.settings = sg_game.settings
         self.color = self.settings.alien_bullet_color
 
-        self.rect = pygame.Rect(0, 0, self.settings.bullet_width, self.settings.bullet_height)
+        self.rect = pygame.Rect(0, 0, self.settings.alien_bullet_width, self.settings.bullet_height)
 
         self.rect.midtop = alien.rect.midbottom
         self.y = float(self.rect.y)
